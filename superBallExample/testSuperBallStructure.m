@@ -19,7 +19,7 @@ barStiffness = 100000*ones(6,1);
 stringDamping = c*ones(24,1);  %string damping vector
 
 options = optimoptions('quadprog','Algorithm',  'interior-point-convex','Display','off');
-addpath('..\tensegrityObjects')
+addpath('../tensegrityObjects')
 
 baseStationPoints = [0+0.96/2     ,   0-1.15/2      ,  1.63;
                          -1.362+0.96/2  ,   0-1.15/2      ,  1.6606 ;  

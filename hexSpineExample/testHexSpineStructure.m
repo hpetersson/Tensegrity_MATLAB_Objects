@@ -5,7 +5,7 @@ delete(out);
 
 %General matlab clearing
 clc; close all; clear all;
-addpath('..\tensegrityObjects')
+addpath('../tensegrityObjects')
 r = 0.10;             % Radius of top tetrahedron ring in meters
 h = 0.15;             % Height of tetrahedrn in meters
 rad = 0.0075;         % Radius of bars in plot in meters
