@@ -143,7 +143,7 @@ classdef TensegrityStructure < handle
             barNodeXYZ =  obj.nodePoints(topNb,:) - obj.nodePoints(botNb,:);
             barLengths = sum((barNodeXYZ.*barNodeXYZ),2).^0.5;
             obj.simStruct = struct('M',M,'fN',fN,'stringStiffness',stringStiffness,...
-                'barStiffness',barStiffness,'C',obj.C,'barRestLengths',barLengths*1.05,'stringDamping',stringDamping,...
+                'barStiffness',barStiffness,'C',obj.C,'barRestLengths',barLengths,'stringDamping',stringDamping,...
                 'topNb',topNb,'botNb',botNb,'topNs',topNs,'botNs',botNs,'stringRestLengths',stringRestLengths);
             nUKF =1 + 12*(obj.n );
             obj.simStructUKF = struct('nUKF',nUKF,'M',repmat(M,1,nUKF),'fN',fN,'stringStiffness',repmat(stringStiffness,1,nUKF),...
@@ -264,14 +264,30 @@ classdef TensegrityStructure < handle
             obj.ySim =[yy;yDot];
             
             function nodeXYZdoubleDot = getAccel(nodeXYZ,nodeXYZdot)
-                memberNodeXYZ = nodeXYZ(topN,:) - nodeXYZ(botN,:);
+                memberNodeXYZ = nodeXYZ(topN,:) - nodeXYZ(botN,:); % Member XYZ matrix M
                 memberNodeXYZdot = nodeXYZdot(topN ,:) - nodeXYZdot(botN,:);
                 lengths = sqrt(sum((memberNodeXYZ).^2,2));
                 memberVel = sum(memberNodeXYZ.*memberNodeXYZdot,2);
-                Q = stiffness.*(restLengths ./ lengths-1) - damping.*memberVel;
+                
+                %restLengths
+                % Compute force density in each string and bar:
+                % F = k(l-l0) model:
+                Q = stiffness.*(restLengths ./ lengths - 1) - damping.*memberVel;
+                % F = c(l-l0)/l0 model:
+                
+                
+                if any(isString & (restLengths>lengths | Q>0))
+                    fprintf('Strings are going slack!\n');
+                end
+                
+                % Enforce all strings can only carry tension:
                 Q((isString & (restLengths>lengths | Q>0))) = 0;
+                
+                
                 GG = (memberNodeXYZ.*Q(:,[1 1 1]));
+                
                 FF = CC*GG;
+                
                 %update points not in contact
                 notTouching = (nodeXYZ(:,3) - groundH)>0;
                 %Compute normal forces
