@@ -1,5 +1,7 @@
 % Simple dynamics example with 6-bar tensegrity.
 
+clear all;
+close all;
 addpath('../tensegrityObjects')
 
 %% Define tensegrity structure

@@ -107,6 +107,16 @@ end
 Now, you should be able to run the `example.m` script, and watch the tensegrity fall to the ground.
 # Rest-Length Control Example
 Control of the tensegrity structure may be implemented in the dynamics update auxiliary function. In our tutorial project `./simpleDynamicsExample/`, open the `myDynamicsUpdate` function and add the following lines:
+```MATLAB
+%%% Optional rest-length controller %%%
+i = i + 1;
+if i == 50 % Start after a certain time.
+    newRestLengths = rand(24, 1); % Random rest lengths.
+    tensStruct.simStruct.stringRestLengths = newRestLengths;
+end
 
+%%% End controller %%%
+```
+This code specifies a 'control input' of 24 rest lengths for each string on the tensegrity. Then, the rest lengths are set to the `TensegrityStructure` a single time in the simulation. You should see the tensegrity respond to the step input of the control lengths in the vizualization window.
 # More Complex Examples
 See UKF example `./superBallExample/`.
