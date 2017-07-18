@@ -120,3 +120,6 @@ end
 This code specifies a 'control input' of 24 rest lengths for each string on the tensegrity. Then, the rest lengths are set to the `TensegrityStructure` a single time in the simulation. You should see the tensegrity respond to the step input of the control lengths in the vizualization window.
 # More Complex Examples
 See UKF example `./superBallExample/`.
+
+##### Tutorial Contributors
+Alex Popescu
