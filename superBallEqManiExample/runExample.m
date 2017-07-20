@@ -25,8 +25,8 @@ b = l*sqrt(3.0/8.0);
 %b = l*0.5;
 %b = l * 0.9;
 %delta = acos(1.0/sqrt(3.0));
-delta = 70.0/180.0*pi;
-alpha = 60/180*pi;
+delta = 72.0/180.0*pi;
+alpha = 68/180*pi;
 
 nodes = SVDB2nodes(alpha, delta, b, l);
                             

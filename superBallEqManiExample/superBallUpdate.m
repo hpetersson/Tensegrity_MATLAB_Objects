@@ -90,10 +90,11 @@ V=Q(:,1:j-1);
 
 % Use V as the first s rows, for only string force densities.
 
-c = 120*200/217; % Minimum force density for strings.
+c = 40; % Minimum force density for strings.
 %c = 200;
 %c = 0;
 % Desired external forces
+%c = 1
 %p = [zeros(24,1); [3 -1 3 -1 3 -1 -1 -1 -1 -1 -1 -1]'] * nodalmass * 9.81;
 p = zeros(12*3,1);
 f = 2*transpose(p)*transpose(Ainv(1:s, :))*V(1:s, :);
