@@ -277,15 +277,19 @@ classdef TensegrityStructure < handle
                 
                 
                 if any(isString & (restLengths>lengths | Q>0))
-                    fprintf('Strings are going slack!\n');
+                    %fprintf('Strings are going slack!\n');
+                    stringsAreSlack=1;
                 end
                 
                 % Enforce all strings can only carry tension:
                 Q((isString & (restLengths>lengths | Q>0))) = 0;
                 
-                
+                % Forces on each cable
                 GG = (memberNodeXYZ.*Q(:,[1 1 1]));
+                %cableTensions = sum(GG.^2, 2).^0.5;
+                %cableTensions = cableTensions(1:24);
                 
+                % Forces on each node
                 FF = CC*GG;
                 
                 %update points not in contact
@@ -307,7 +311,7 @@ classdef TensegrityStructure < handle
                 tangentForces = staticF + dynamicF ;
                 groundForces = [tangentForces normForces];
                 nodeXYZdoubleDot = (FF+groundForces).*M;
-                nodeXYZdoubleDot(:,3) = nodeXYZdoubleDot(:,3) -9.81;
+                nodeXYZdoubleDot(:,3) = nodeXYZdoubleDot(:,3);% -9.81;
                 nodeXYZdoubleDot(fN,:) = 0;
             end
         end
@@ -446,7 +450,7 @@ classdef TensegrityStructure < handle
                 groundForces = [tangentForces normForces];
                 groundForces = groundForces(:,fIndex);
                 nodeXYZdoubleDot = (FF+groundForces).*M;
-                nodeXYZdoubleDot(:,3:3:end) = nodeXYZdoubleDot(:,3:3:end) - 9.81;
+                nodeXYZdoubleDot(:,3:3:end) = nodeXYZdoubleDot(:,3:3:end);% - 9.81;
                 nodeXYZdoubleDot(fN,:) = 0;
             end
         end

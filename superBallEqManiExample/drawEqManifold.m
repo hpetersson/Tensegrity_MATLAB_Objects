@@ -7,7 +7,8 @@ l = 1;
 
 %cum_space = zeros(npts, npts);
 
-for b = linspace(0, 1.5, 50)
+%for b = linspace(0, 1.5, 50)
+for b = 0.5
     space = zeros(npts, npts); % 2d space for (alpha, delta)
     
     alpha_i = linspace(0, 90, npts);
