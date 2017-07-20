@@ -40,15 +40,15 @@ b = baselen;
 % Constant controller
 l = barlen;
 % Check if point is on eq. manifold:
-%if l*sin(vec(1))*abs(cos(vec(2) + pi/6)) < vec(3)/(2*sqrt(3)) ...
-%    && sin(vec(2) + pi/6) < 3*l*sin(vec(1))/(2*vec(3))
+if l*sin(vec(1))*abs(cos(vec(2) + pi/6)) < vec(3)/(2*sqrt(3)) ...
+    && sin(vec(2) + pi/6) < 3*l*sin(vec(1))/(2*vec(3))
     % On manifold!
     delta = vec(1);
     alpha = vec(2);
-    b = vec(3)
-%else
+    b = vec(3);
+else
     % Not on manifold!
-%end
+end
 
 %%%%% Compute commanded rest lengths: %%%%%
 
@@ -57,7 +57,7 @@ C = superBall.C;
 s = 24; % Number of strings
 r = 6;  % Number of rods
 
-nodes = superBall.nodePoints;
+nodes = SVDB2nodes(alpha, delta, b, l);
 
 % Compute A ,the equilibrium matrix
 A = [transpose(C) * diag(C*nodes(:,1));
@@ -90,14 +90,16 @@ V=Q(:,1:j-1);
 
 % Use V as the first s rows, for only string force densities.
 
-%c = 200*200/315.9879; % Minimum force density for strings.
-c = 1000;
+c = 120*200/217; % Minimum force density for strings.
+%c = 200;
+%c = 0;
 % Desired external forces
 %p = [zeros(24,1); [3 -1 3 -1 3 -1 -1 -1 -1 -1 -1 -1]'] * nodalmass * 9.81;
 p = zeros(12*3,1);
 f = 2*transpose(p)*transpose(Ainv(1:s, :))*V(1:s, :);
 options = optimoptions('quadprog','Algorithm',  'interior-point-convex','Display','off');
-w = quadprog(2*transpose(V(1:s,:))*V(1:s, :), f, -V(1:s, :), zeros(s,1) - c + Ainv(1:s,:)*p);
+w = quadprog(2*transpose(V(1:s,:))*V(1:s, :), f, -V(1:s, :), zeros(s,1) - c + Ainv(1:s,:)*p, ...
+    [],[], [],[], [], options);
 
 % Now w has been found, we can find q_s:
 q_s = Ainv(1:s, :) * p + V(1:s, :) * w;
@@ -140,11 +142,10 @@ lengths = [ones(6, 1) * S;
            ones(6, 1) * VV;
            ones(6, 1) * D;
            ones(6, 1) * B ];
-T_str = q_s .* lengths; % Only take string force densities
+T_str = q_s .* lengths % Only take string force densities
 %T_str(T_str>300)=300; % Clip
-T_str
 %T_str = T_str./max(T_str)*200 % Limit tensions to 200N
-restlens = lengths - T_str ./ superBall.simStruct.stringStiffness % New rest lengths
+restlens = lengths - T_str ./ superBall.simStruct.stringStiffness; % New rest lengths
 superBall.simStruct.stringRestLengths = restlens;
 
 

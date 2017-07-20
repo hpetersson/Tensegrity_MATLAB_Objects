@@ -311,7 +311,8 @@ classdef TensegrityStructure < handle
                 tangentForces = staticF + dynamicF ;
                 groundForces = [tangentForces normForces];
                 nodeXYZdoubleDot = (FF+groundForces).*M;
-                nodeXYZdoubleDot(:,3) = nodeXYZdoubleDot(:,3);% -9.81;
+                % Apply gravity
+                nodeXYZdoubleDot(:,3) = nodeXYZdoubleDot(:,3) -9.81;
                 nodeXYZdoubleDot(fN,:) = 0;
             end
         end
