@@ -1,9 +1,11 @@
-<<<<<<< HEAD
 # Tensegrity_MATLAB_Objects (MATLAB Tensegrity Dynamics Modeling and Simulation Framework)
 
 This MATLAB framework allows modeling and simulation of tensegrity dynamics, or the dynamics of a network of bars and strings. The dynamics of each bar are modeled as 2 point masses, one at each end of the bar. Collisions with a rigid ground are supported, but inter-bar collisions are not. The goal of this framework is to increase simulation fidelity compared to other tensegrity simulators such as NTRT.
 
-#Getting-Started Tutorial
+# Equilibrium Manifold
+The /superBallEqManiExample folder contains code for navigating the equilibrium manifold (Sultan) of the tensegrity icosahedra. To run it, run `superBallEqManiExample/runExample.m'.
+
+# Getting-Started Tutorial
 This short tutorial shows how to create a tensegrity model and simulate its dynamics using the Tensegrity_MATLAB_Objects framework. To see the end result of the tutorial, run  `./simpleDynamicsExample/example.m`.
 ![Tutorial Illustration](TutorialPicture.png)
 
@@ -148,4 +150,3 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
->>>>>>> d37ce88058debf57ef7ba14703e552638ab49bbc
