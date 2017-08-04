@@ -44,6 +44,7 @@ classdef TensegrityStructure < handle
         P
         lengthMeasureIndices
         baseStationPoints
+        stringTensions
         
     end
     
@@ -278,16 +279,22 @@ classdef TensegrityStructure < handle
                 
                 if any(isString & (restLengths>lengths | Q>0))
                     %fprintf('Strings are going slack!\n');
-                    stringsAreSlack=1;
+                    %stringsAreSlack=1;
                 end
                 
                 % Enforce all strings can only carry tension:
                 Q((isString & (restLengths>lengths | Q>0))) = 0;
                 
+                memberTensions = -Q .* lengths;
+                T_limit = 200;
+                memberTensions(isString & (memberTensions > T_limit)) = T_limit; % Saturate cable tensions
+                obj.stringTensions = memberTensions(logical(isString));
+                Q = -memberTensions ./ lengths;
+                
                 % Forces on each cable
                 GG = (memberNodeXYZ.*Q(:,[1 1 1]));
                 %cableTensions = sum(GG.^2, 2).^0.5;
-                %cableTensions = cableTensions(1:24);
+                
                 
                 % Forces on each node
                 FF = CC*GG;
@@ -298,6 +305,16 @@ classdef TensegrityStructure < handle
                 normForces = (groundH-nodeXYZ(:,3)).*(Kp - Kd*nodeXYZdot(:,3));
                 normForces(notTouching) = 0; %norm forces not touching are zero
                 xyDot = nodeXYZdot(:,1:2);
+                
+                % Keep nodes of top of structure above a certain height
+                % to simulate bar collisions near packed configuration
+                minHeight = 0.15;
+                notTouching = (nodeXYZ(:,3) - (groundH + minHeight))>0;
+                %Compute normal forces
+                normForces2 = ((groundH + minHeight)-nodeXYZ(:,3)).*(Kp - Kd*nodeXYZdot(:,3));
+                normForces2(notTouching) = 0; %norm forces not touching are zero
+                normForces2(1:2:12, :) = 0; % Don't apply force to other nodes than top ones.
+                
                 %Possible static friction to apply
                 staticF = kFP*(lastContact - nodeXYZ(:,1:2)) - kFD*xyDot;
                 staticNotApplied = (sum((staticF).^2,2) > (muS*normForces).^2)|notTouching;
@@ -309,10 +326,11 @@ classdef TensegrityStructure < handle
                 dynamicF = dynamicFmag(:,[1 1]).* xyDot;
                 dynamicF(~staticNotApplied,:) = 0;
                 tangentForces = staticF + dynamicF ;
-                groundForces = [tangentForces normForces];
+                groundForces = [tangentForces normForces + 0*normForces2];
                 nodeXYZdoubleDot = (FF+groundForces).*M;
+                
                 % Apply gravity
-                nodeXYZdoubleDot(:,3) = nodeXYZdoubleDot(:,3) -9.81;
+                nodeXYZdoubleDot(:,3) = nodeXYZdoubleDot(:,3)  -9.81;
                 nodeXYZdoubleDot(fN,:) = 0;
             end
         end

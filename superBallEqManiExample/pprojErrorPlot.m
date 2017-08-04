@@ -1,6 +1,6 @@
 % Plot the projection error of p onto range(A).
 
-npts = 40;
+npts = 80;
 
 % Connection matrix:
 C = [0,0,0,0,0,1,0,0,-1,0,0,0;0,0,0,1,0,0,0,0,-1,0,0,0;0,0,0,1,0,0,-1,0,0,0,0,0;0,1,0,0,0,0,-1,0,0,0,0,0;0,1,0,0,0,0,0,0,0,0,-1,0;0,0,0,0,0,1,0,0,0,0,-1,0;1,0,0,0,0,-1,0,0,0,0,0,0;0,0,0,1,-1,0,0,0,0,0,0,0;0,1,-1,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,1,0,0,-1,0;0,0,0,0,0,0,1,0,0,-1,0,0;0,0,0,0,0,0,0,0,1,0,0,-1;1,0,0,0,0,0,0,0,0,0,-1,0;0,0,1,0,0,0,-1,0,0,0,0,0;0,0,0,0,1,0,0,0,-1,0,0,0;0,1,0,0,0,0,0,-1,0,0,0,0;0,0,0,1,0,0,0,0,0,-1,0,0;0,0,0,0,0,1,0,0,0,0,0,-1;1,0,0,0,-1,0,0,0,0,0,0,0;0,0,1,0,-1,0,0,0,0,0,0,0;1,0,-1,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,1,0,0,0,-1;0,0,0,0,0,0,0,0,0,1,0,-1;0,0,0,0,0,0,0,1,0,-1,0,0;1,-1,0,0,0,0,0,0,0,0,0,0;0,0,1,-1,0,0,0,0,0,0,0,0;0,0,0,0,1,-1,0,0,0,0,0,0;0,0,0,0,0,0,1,-1,0,0,0,0;0,0,0,0,0,0,0,0,1,-1,0,0;0,0,0,0,0,0,0,0,0,0,1,-1];
@@ -9,11 +9,14 @@ r = 6;  % Number of rods
 
 % External force vector
 p = [zeros(24,1); [3 -1 3 -1 3 -1 -1 -1 -1 -1 -1 -1]'] * 3*9.81; % Each node is 3kg
+p = [zeros(24,1); [1 -1 1 -1 1 -1   1 -1  1 -1  1 -1]'] * 3 * 9.81;
 
 % Fixed parameters:
 % Define SUPERball nodes using Sultan's ordering:
 l = 1;
 b = l*sqrt(3.0/8.0);
+
+%for b = linspace(0.1, 1, 3)
 
 alpha_i = linspace(0, 90, npts);
 delta_i = linspace(0, 89, npts);
@@ -85,56 +88,56 @@ Z_feas = Alph*0 + NaN;
             Z(x, y) = sqrt(projectionError);
               
             
-            % Now, solve for force density vector q using quadratic program (QP):
-            Ainv = pinv(A);
-            AinvA = Ainv * A;
-
-            % Full V.
-            V = (eye(length(AinvA)) - AinvA);
-            
-            % Find an orthonormal basis for the range of V.
-            % NOTE: We don't use orth here, because orth uses precision
-            % eps, which is too small!
-            [Q,R,E] = qr(V);
-            [m , n] = size(R);
-            j=1;
-            i=1;
-            while i<=m
-                if norm(R(i,:))>10^-12
-                    R_new(j,:)=R(i,:);
-                    j=j+1;
-                else
-                    i=m;
-                end
-                i=i+1;
-            end
-            V=Q(:,1:j-1);
-            
-            c = 0; % Minimum force density for strings.
-            f = 2*transpose(p)*transpose(Ainv(1:s, :))*V(1:s, :);
-            w = quadprog(2*transpose(V(1:s,:))*V(1:s, :), f, -V(1:s, :), zeros(s,1) - c + Ainv(1:s,:)*p);
-
-            % Now w has been found, we can find q_s:
-            q_s = Ainv(1:s, :) * p + V(1:s, :) * w;
-
-            % Find q_r, the force densities in the rods, to balance q_s:
-            A_s = A(:, 1:s);
-            A_r = A(:, s+1:end);
-            q_r = pinv(A_r)*(p - A_s*q_s);
-
-            % We now have q_total
-            q = [q_s; q_r];
-            proj_feas = sqrt(transpose(A*q-p)*(A*q-p) / norm(p)^2);
-            
-            if proj_feas > 2
-                proj_feas = 2;
-            end
-            Z_feas(x, y) = proj_feas;
+%             % Now, solve for force density vector q using quadratic program (QP):
+%             Ainv = pinv(A);
+%             AinvA = Ainv * A;
+% 
+%             % Full V.
+%             V = (eye(length(AinvA)) - AinvA);
+%             
+%             % Find an orthonormal basis for the range of V.
+%             % NOTE: We don't use orth here, because orth uses precision
+%             % eps, which is too small!
+%             [Q,R,E] = qr(V);
+%             [m , n] = size(R);
+%             j=1;
+%             i=1;
+%             while i<=m
+%                 if norm(R(i,:))>10^-12
+%                     R_new(j,:)=R(i,:);
+%                     j=j+1;
+%                 else
+%                     i=m;
+%                 end
+%                 i=i+1;
+%             end
+%             V=Q(:,1:j-1);
+%             
+%             c = 0; % Minimum force density for strings.
+%             f = 2*transpose(p)*transpose(Ainv(1:s, :))*V(1:s, :);
+%             w = quadprog(2*transpose(V(1:s,:))*V(1:s, :), f, -V(1:s, :), zeros(s,1) - c + Ainv(1:s,:)*p);
+% 
+%             % Now w has been found, we can find q_s:
+%             q_s = Ainv(1:s, :) * p + V(1:s, :) * w;
+% 
+%             % Find q_r, the force densities in the rods, to balance q_s:
+%             A_s = A(:, 1:s);
+%             A_r = A(:, s+1:end);
+%             q_r = pinv(A_r)*(p - A_s*q_s);
+% 
+%             % We now have q_total
+%             q = [q_s; q_r];
+%             proj_feas = sqrt(transpose(A*q-p)*(A*q-p) / norm(p)^2);
+%             
+%             if proj_feas > 2
+%                 proj_feas = 2;
+%             end
+%             Z_feas(x, y) = proj_feas;
         end
     end
 
 surf(Alph, Delt, Z); hold on;
-surf(Alph, Delt, Z_feas);
+%surf(Alph, Delt, Z_feas);
 %contourf(Alph, Delt, Z, 20);
 ylabel('alpha');
 ylim([30, 90]);
@@ -142,3 +145,7 @@ xlabel('delta');
 colorbar;
 
 zlabel('error');
+
+pause(1);
+drawnow;
+%end
