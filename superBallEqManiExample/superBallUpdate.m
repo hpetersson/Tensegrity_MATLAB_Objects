@@ -77,12 +77,12 @@ end
 % Commanded alpha(t), delta(t):
 Td=10;
 %Cylindrical packing:
-delta = max(9/180*pi, delta_i + time/Td*(9/180*pi-delta_i));
-alpha = min(70/180*pi, alpha_i + time/Td*(80/180*pi-alpha_i)); % should be 70
-b = max(0.1*barlen, baselen + (time)/Td*(0.1*barlen - baselen)); % should be 0.1
-if b > baselen
-    b = baselen;
-end
+% delta = max(9/180*pi, delta_i + time/Td*(9/180*pi-delta_i));
+% alpha = min(70/180*pi, alpha_i + time/Td*(80/180*pi-alpha_i)); % should be 70
+% b = max(0.1*barlen, baselen + (time)/Td*(0.1*barlen - baselen)); % should be 0.1
+% if b > baselen
+%     b = baselen;
+% end
 
 
 
