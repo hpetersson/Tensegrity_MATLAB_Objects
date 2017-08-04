@@ -19,7 +19,7 @@ classdef TensegrityCallbackFunctions <handle
         end
     end
     methods(Static)
-        function makeSlider(f, x, y,func,lims,title)
+        function makeSlider(f, x, y,func,lims,initval,title, displayScaling, digformat)
             %Fuction to make a quick slider
             %f - a handle to the figure the slider will be created in
             %x - the x position in pixels of the slider
@@ -30,19 +30,28 @@ classdef TensegrityCallbackFunctions <handle
             %       vector
             %title - a string which contains the title for the slider
             
-            b2 = uicontrol('Parent',f,'Style','slider','Position',[51,54,419,23]+[x y 0 0],...
-                'value',mean(lims), 'min',lims(1), 'max',lims(2));
+            lims = lims*displayScaling;
+            initval = initval*displayScaling;
+            
+            slider = uicontrol('Parent',f,'Style','slider','Position',[51,54,419,23]+[x y 0 0],...
+                'value',initval, 'min',lims(1), 'max',lims(2));
             bgcolor = f.Color;
             uicontrol('Parent',f,'Style','text','Position',[45,25,23,23]+[x y 0 0],...
                 'String',num2str(lims(1),3),'BackgroundColor',bgcolor);
             uicontrol('Parent',f,'Style','text','Position',[450,25,23,23]+[x y 0 0],...
                 'String',num2str(lims(2),3),'BackgroundColor',bgcolor);
-            uicontrol('Parent',f,'Style','text','Position',[210,25,100,23]+[x y 0 0],...
+            tbox = uicontrol('Parent',f,'Style','text','Position',[210,25,210,23]+[x y 0 0],...
                 'String',title,'BackgroundColor',bgcolor);
             
             %only way I found to get the slider to update smoothly when
             %dragged
-            addlistener(b2,'ContinuousValueChange', func);
+            callback = @(a, b) TensegrityCallbackFunctions.updateValAndCallback(slider, tbox, title, func, displayScaling, digformat);
+            addlistener(slider, 'ContinuousValueChange', callback);
+            callback(); % Update value initially.
+        end
+        function updateValAndCallback(sliderObj, textObj, title, func, displayScaling, digformat)
+            textObj.String = [title, ' = ', sprintf(digformat, sliderObj.Value)];
+            func(sliderObj.Value/displayScaling); % Call callback function
         end
     end
     

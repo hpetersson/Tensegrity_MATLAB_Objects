@@ -44,6 +44,7 @@ classdef TensegrityStructure < handle
         P
         lengthMeasureIndices
         baseStationPoints
+        stringTensions
         
     end
     
@@ -143,7 +144,7 @@ classdef TensegrityStructure < handle
             barNodeXYZ =  obj.nodePoints(topNb,:) - obj.nodePoints(botNb,:);
             barLengths = sum((barNodeXYZ.*barNodeXYZ),2).^0.5;
             obj.simStruct = struct('M',M,'fN',fN,'stringStiffness',stringStiffness,...
-                'barStiffness',barStiffness,'C',obj.C,'barRestLengths',barLengths*1.05,'stringDamping',stringDamping,...
+                'barStiffness',barStiffness,'C',obj.C,'barRestLengths',barLengths,'stringDamping',stringDamping,...
                 'topNb',topNb,'botNb',botNb,'topNs',topNs,'botNs',botNs,'stringRestLengths',stringRestLengths);
             nUKF =1 + 12*(obj.n );
             obj.simStructUKF = struct('nUKF',nUKF,'M',repmat(M,1,nUKF),'fN',fN,'stringStiffness',repmat(stringStiffness,1,nUKF),...
@@ -264,20 +265,56 @@ classdef TensegrityStructure < handle
             obj.ySim =[yy;yDot];
             
             function nodeXYZdoubleDot = getAccel(nodeXYZ,nodeXYZdot)
-                memberNodeXYZ = nodeXYZ(topN,:) - nodeXYZ(botN,:);
+                memberNodeXYZ = nodeXYZ(topN,:) - nodeXYZ(botN,:); % Member XYZ matrix M
                 memberNodeXYZdot = nodeXYZdot(topN ,:) - nodeXYZdot(botN,:);
                 lengths = sqrt(sum((memberNodeXYZ).^2,2));
                 memberVel = sum(memberNodeXYZ.*memberNodeXYZdot,2);
-                Q = stiffness.*(restLengths ./ lengths-1) - damping.*memberVel;
+                
+                %restLengths
+                % Compute force density in each string and bar:
+                % F = k(l-l0) model:
+                Q = stiffness.*(restLengths ./ lengths - 1) - damping.*memberVel;
+                % F = c(l-l0)/l0 model:
+                
+                
+                if any(isString & (restLengths>lengths | Q>0))
+                    %fprintf('Strings are going slack!\n');
+                    %stringsAreSlack=1;
+                end
+                
+                % Enforce all strings can only carry tension:
                 Q((isString & (restLengths>lengths | Q>0))) = 0;
+                
+                memberTensions = -Q .* lengths;
+                T_limit = 200;
+                memberTensions(isString & (memberTensions > T_limit)) = T_limit; % Saturate cable tensions
+                obj.stringTensions = memberTensions(logical(isString));
+                Q = -memberTensions ./ lengths;
+                
+                % Forces on each cable
                 GG = (memberNodeXYZ.*Q(:,[1 1 1]));
+                %cableTensions = sum(GG.^2, 2).^0.5;
+                
+                
+                % Forces on each node
                 FF = CC*GG;
+                
                 %update points not in contact
                 notTouching = (nodeXYZ(:,3) - groundH)>0;
                 %Compute normal forces
                 normForces = (groundH-nodeXYZ(:,3)).*(Kp - Kd*nodeXYZdot(:,3));
                 normForces(notTouching) = 0; %norm forces not touching are zero
                 xyDot = nodeXYZdot(:,1:2);
+                
+                % Keep nodes of top of structure above a certain height
+                % to simulate bar collisions near packed configuration
+                minHeight = 0.15;
+                notTouching = (nodeXYZ(:,3) - (groundH + minHeight))>0;
+                %Compute normal forces
+                normForces2 = ((groundH + minHeight)-nodeXYZ(:,3)).*(Kp - Kd*nodeXYZdot(:,3));
+                normForces2(notTouching) = 0; %norm forces not touching are zero
+                normForces2(1:2:12, :) = 0; % Don't apply force to other nodes than top ones.
+                
                 %Possible static friction to apply
                 staticF = kFP*(lastContact - nodeXYZ(:,1:2)) - kFD*xyDot;
                 staticNotApplied = (sum((staticF).^2,2) > (muS*normForces).^2)|notTouching;
@@ -289,9 +326,11 @@ classdef TensegrityStructure < handle
                 dynamicF = dynamicFmag(:,[1 1]).* xyDot;
                 dynamicF(~staticNotApplied,:) = 0;
                 tangentForces = staticF + dynamicF ;
-                groundForces = [tangentForces normForces];
+                groundForces = [tangentForces normForces + 0*normForces2];
                 nodeXYZdoubleDot = (FF+groundForces).*M;
-                nodeXYZdoubleDot(:,3) = nodeXYZdoubleDot(:,3) -9.81;
+                
+                % Apply gravity
+                nodeXYZdoubleDot(:,3) = nodeXYZdoubleDot(:,3)  -9.81;
                 nodeXYZdoubleDot(fN,:) = 0;
             end
         end
@@ -430,7 +469,7 @@ classdef TensegrityStructure < handle
                 groundForces = [tangentForces normForces];
                 groundForces = groundForces(:,fIndex);
                 nodeXYZdoubleDot = (FF+groundForces).*M;
-                nodeXYZdoubleDot(:,3:3:end) = nodeXYZdoubleDot(:,3:3:end) - 9.81;
+                nodeXYZdoubleDot(:,3:3:end) = nodeXYZdoubleDot(:,3:3:end);% - 9.81;
                 nodeXYZdoubleDot(fN,:) = 0;
             end
         end
